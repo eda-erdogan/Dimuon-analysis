@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 print("Loading dataset...")
 df = pd.read_csv('/home/edaerdogan/Desktop/dimuonai/dimuon.csv')
 
-signal_df = df[df['Q1'] * df['Q2'] < 0].copy()
+signal_df = df[df['Q1'] * df['Q2'] < 0].copy() #df unaffected kalmalı, bu yüzden copy kullandım. Ana amacımız signal ve background ayrımı yapmak 
 background_df = df[df['Q1'] * df['Q2'] >= 0].copy() 
 
 signal_df['target'] = 0
@@ -48,7 +48,7 @@ train_data_tensor = torch.tensor(train_data.values, dtype=torch.float32)
 test_data_tensor = torch.tensor(test_data.values, dtype=torch.float32)
 
 train_target_tensor = torch.tensor(train_target.values, dtype=torch.float32)
-test_target_tensor = torch.tensor(test_target.values, dtype=torch.float32)
+test_target_tensor = torch.tensor(test_target.values, dtype=torch.float32) #sanırım filtrelediğim için buna ihtiyacım var o yüzden ekledim, tek data yetmeyebilir
 
 # Custom dataset to read
 class MuonDataset(Dataset):
@@ -73,14 +73,14 @@ test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
 # DNN model
 class MuonDNN(nn.Module):
     def __init__(self):
-        super(MuonDNN, self).__init__()
+        super(MuonDNN, self).__init__() #8 nodes in input, 100-50-20 in hiddens, 1 for output
 
-        self.hidden_layer1 = nn.Linear(8, 100)
+        self.hidden_layer1 = nn.Linear(8, 100) #input olmadan doğru mu anlayamadım, nöron sayısına göre elimine edersem pytorch doldurabilir gibi düşündüm 
         self.hidden_layer2 = nn.Linear(100, 50)
         self.hidden_layer3 = nn.Linear(50, 20)
         self.output_layer = nn.Linear(20, 1)
 
-        self.activation = nn.ReLU()
+        self.activation = nn.ReLU() #input için de koymuş aslında fakat nöron sayısı uyuşmadığı için o kısmı atlamak zorunda kaldım
         self.output_activation = nn.Sigmoid()
 
         self.dropout = nn.Dropout(0.2)
@@ -108,7 +108,7 @@ best_test_loss = float('inf')
 best_epoch = 0
 patience = 5
 
-params = {"batch_size": 128}
+params = {"batch_size": 128}  #makalede hyperparametreler özellikle verilmiyor, ekstra ne eklemek gerekli?
 
 # Initialize counters for overall metrics
 total_signal_predictions = []
@@ -202,13 +202,14 @@ for epoch in range(num_epochs):
         tn_background, fp_background, fn_background, tp_background = conf_matrix_background.ravel()
         precision_background = precision_score(total_background_targets_tensor, total_background_predictions_tensor)
         sensitivity_background = recall_score(total_background_targets_tensor, total_background_predictions_tensor)
-
+        #TP, FN, FP, TN; bu değerler makaledekine epey yakın çıkıyor 
+        
         # Precision for the entire model
         predictions_np = np.concatenate(predictions)
         test_target_np = test_target_tensor.numpy()
         precision_model = precision_score(test_target_np, predictions_np)
 
-        # Print metrics
+        # Print metrics 
         print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {loss.item()}, Test Loss: {average_test_loss}, Accuracy: {accuracy}')
         print('Signal Metrics:')
         print(f'TP: {tp_signal}, FN: {fn_signal}, FP: {fp_signal}, TN: {tn_signal}')
@@ -220,7 +221,7 @@ for epoch in range(num_epochs):
 
         print(f'Precision (Overall): {precision_model}')
 
-        # Early stopping
+        # Early stopping, 100k dataset için overfit olması yüksek diye düşünüyorum
         if average_test_loss < best_test_loss:
             best_test_loss = average_test_loss
             best_epoch = epoch
