@@ -1,4 +1,3 @@
-#Dimuon analysis for 100k events
 import pandas as pd
 import lightgbm as lgb
 from sklearn.model_selection import train_test_split
@@ -27,11 +26,11 @@ train_dataset = lgb.Dataset(train_data, label=train_target)
 test_dataset = lgb.Dataset(test_data, label=test_target, reference=train_dataset)
 
 # LightGBM parameters
-params = {
+params = { #num_iterations?
     'objective': 'binary',
     'metric': 'binary_logloss',
     'boosting_type': 'gbdt',
-    'num_leaves': 31,  # Adjust based on your needs
+    'num_leaves': 31,  # Adjustable
     'learning_rate': 0.1,
     'num_trees': 32,  # Number of trees
     'feature_fraction': 0.9,
@@ -55,7 +54,7 @@ def custom_eval(preds, eval_data):
         print(f'No improvement for 5 rounds. Stopping early.')
         return True  # Stop training
 
-    return False  # Continue training'''
+    return False  '''
 
 # Training
 model = lgb.train(params,
@@ -73,13 +72,15 @@ test_preds = model.predict(test_data)
 train_predictions = (train_preds >= 0.5).astype(int)
 test_predictions = (test_preds >= 0.5).astype(int)
 
+# tn, fp, fn, tp = conf_matrix.ravel() in case i need separate calc for the values
+
 # Evaluate on the test set
-accuracy = accuracy_score(test_target, test_predictions)
+accuracy = accuracy_score(test_target, test_predictions) #the set of labels predicted for a sample must exactly match the corresponding set of labels in y_true
 conf_matrix = confusion_matrix(test_target, test_predictions)
-precision = precision_score(test_target, test_predictions)
-recall = recall_score(test_target, test_predictions)
-f1 = f1_score(test_target, test_predictions)
-roc_auc = roc_auc_score(test_target, test_preds)
+precision = precision_score(test_target, test_predictions) #tp / (tp + fp)
+recall = recall_score(test_target, test_predictions) #tp / (tp + fn)
+f1 = f1_score(test_target, test_predictions, average='micro') #F1 = 2 * TP / (2 * TP + FN + FP)
+roc_auc = roc_auc_score(test_target, test_preds) #Area Under the Receiver Operating Characteristic Curve
 
 print(f'Accuracy: {accuracy}')
 print(f'Confusion Matrix:\n{conf_matrix}')
