@@ -221,7 +221,7 @@ for epoch in range(num_epochs):
 
         print(f'Precision (Overall): {precision_model}')
 
-        # Early stopping, 100k dataset için overfit olması yüksek diye düşünüyorum
+        # Early stopping
         if average_test_loss < best_test_loss:
             best_test_loss = average_test_loss
             best_epoch = epoch
